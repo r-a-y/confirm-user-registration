@@ -139,12 +139,12 @@ class Confirm_User_Registration
 	/**
 	 * Authenticate Users
 	 *
-	 * @access public
+	 * @access protected
 	 * @param array $user_ids User IDs to confirm
 	 * @return void
 	 * @author Ralf Hortt
 	 **/
-	public function auth_users( array $user_ids )
+	protected function auth_users( array $user_ids )
 	{
 		if ( $user_ids && current_user_can( 'promote_users' ) ) :
 
@@ -176,12 +176,12 @@ class Confirm_User_Registration
 	/**
 	 * Block Users
 	 *
-	 * @access public
+	 * @access protected
 	 * @param array $user_ids User IDs to block
 	 * @return void
 	 * @author Ralf Hortt
 	 **/
-	public function block_users( array $user_ids )
+	protected function block_users( array $user_ids )
 	{
 		if ( $user_ids && current_user_can( 'promote_users' ) ) :
 
@@ -212,13 +212,13 @@ class Confirm_User_Registration
 	/**
 	 * Bulk delete users
 	 *
-	 * @access public
+	 * @access protected
 	 * @param array $user_ids User IDs to block
 	 * @return void
 	 * @since 2.1
 	 * @author Ralf Hortt
 	 **/
-	public function delete_users( array $user_ids )
+	protected function delete_users( array $user_ids )
 	{
 		if ( $user_ids && current_user_can( 'delete_users' ) ) :
 
@@ -345,11 +345,11 @@ class Confirm_User_Registration
 	/**
 	 * Checks if plugin was installed before
 	 *
-	 * @access public
+	 * @access protected
 	 * @return bool
 	 * @author Ralf Hortt
 	 **/
-	public function is_first_time()
+	protected function is_first_time()
 	{
 		if ( !get_site_option( 'cur_from' ) && !get_site_option( 'confirm-user-registration' ) ) :
 			return TRUE;
@@ -362,11 +362,11 @@ class Confirm_User_Registration
 	/**
 	 * Upgrade from 1.x to < 2.0
 	 *
-	 * @access public
+	 * @access protected
 	 * @return bool
 	 * @author Ralf Hortt
 	 **/
-	public function is_upgrade()
+	protected function is_upgrade()
 	{
 		if ( get_site_option( 'cur_from' ) ) :
 			return TRUE;
@@ -642,12 +642,12 @@ class Confirm_User_Registration
 	/**
 	 * Send notification
 	 *
-	 * @access public
+	 * @access protected
 	 * @param int $user_id User ID
 	 * @return void
 	 * @author Ralf Hortt
 	 **/
-	public function send_notification( $user_id )
+	protected function send_notification( $user_id )
 	{
 		$options = get_site_option( 'confirm-user-registration' );
 		$user = get_userdata( $user_id );
