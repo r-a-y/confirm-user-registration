@@ -69,18 +69,7 @@ class Confirm_User_Registration
 	{
 		// First time installation
 		if ( $this->is_first_time() ) :
-
-			$users = get_users();
-
-			if ( $users ) :
-
-				foreach ( $users as $user ) :
-
-					update_usermeta( $user->ID, 'authentication', '1' );
-
-				endforeach;
-
-			endif;
+			$this->set_current_users_as_authenticated();
 
 			add_site_option( 'confirm-user-registration', array(
 				# Notifcation to admin
@@ -97,7 +86,6 @@ class Confirm_User_Registration
 		else :
 
 			if ( $this->is_upgrade() ) :
-
 				// Create new option array
 				add_site_option( 'confirm-user-registration', array(
 					# Notifcation to admin
@@ -289,67 +277,51 @@ class Confirm_User_Registration
 
 
 	/**
-	 * Get authed users
+	 * Get users depending on the context.
 	 *
-	 * @access public
-	 * @return array Users
-	 * @author Ralf Hortt
-	 **/
-	public function get_authed_users()
-	{
-		return get_users(array(
-			'meta_key' => 'authentication',
-			'meta_compage' => '=',
-			'meta_value' => 1
-		));
-	}
-
-
-
-	/**
-	 * Get pending users
+	 * To get pending users, pass $type as 'pending'.
+	 * To get authenticated users, leave blank or pass 'auth'.
 	 *
-	 * @access public
-	 * @return array Users
-	 * @author Ralf Hortt
+	 * @since 2.2
+	 *
+	 * @access protected
+	 * @param string $type Supports either 'auth' or 'pending'.
+	 * @param string|array $args See parameters in get_users().
+	 * @return array|bool Array of users on success.  Boolean false on failure.
+	 * @author r-a-y
 	 **/
-	public function get_pending_users()
+	protected function get_users( $type = 'auth', $args = array() )
 	{
-		$users = get_users();
+		switch ( $type ) {
+			case 'pending' :
+				$compare = 'NOT EXISTS';
+				break;
 
-		$authed_users = $this->get_authed_users();
+			case 'auth' :
+			default :
+				$compare = 'EXISTS';
+				break;
+		}
 
-		$authed_ids = array();
+		// check if a user is authenticated or not
+		// depends on the $type
+		$defaults = array(
+			'orderby'      => 'ID',
+			'meta_key'     => 'authentication',
+			'meta_value'   => '1',
+			'meta_compare' => $compare
+		);
 
-		if ( $authed_users ) :
+		// for multisite, we need to remove the 'blog_id' so we can get all users
+		// without the capabilities meta key added to the FROM query
+		if ( is_multisite() ) {
+			$defaults['blog_id'] = false;
+		}
 
-			foreach ( $authed_users as $authed_user ) :
+		$args = wp_parse_args( $args, $defaults );
 
-				array_push( $authed_ids, $authed_user->ID );
-
-			endforeach;
-
-		endif;
-
-		$pending_users = array();
-
-		if ( $users ) :
-
-			foreach ( $users as $user ) :
-
-				if ( !in_array( $user->ID, $authed_ids ) ) :
-
-					array_push( $pending_users, $user );
-
-				endif;
-
-			endforeach;
-
-		endif;
-
-		return $pending_users;
+		return get_users( $args );
 	}
-
 
 
 	/**
@@ -535,7 +507,7 @@ class Confirm_User_Registration
 			$this->delete_users( $_POST['users'] );
 		endif;
 
-		$users = ( 'pending' == $tab || '' == $tab ) ? $this->get_pending_users() : $this->get_authed_users();
+		$users = ( 'pending' == $tab || '' == $tab ) ? $this->get_users( 'pending' ) : $this->get_users();
 		$title = ( 'pending' == $tab || '' == $tab ) ? __( 'Authenticate Users', 'confirm-user-registration' ) : __( 'Block Users', 'confirm-user-registration' );
 		$action_data = ( 'pending' == $tab || '' == $tab ) ? 'auth' : 'block';
 		?>
@@ -705,11 +677,57 @@ class Confirm_User_Registration
 			return $user[0];
 		else :
 			$user = new WP_Error();
-			$options = get_site_option( 'confirm-user-registration' );
+			$options = get_option( 'confirm-user-registration' );
 			$error_message = apply_filters( 'confirm-user-registration-error-message', $options['error'] );
 			$user->add( 'error', $error_message );
 			return $user;
 		endif;
+	}
+
+	/**
+	 * Sets all current users as authenticated.
+	 *
+	 * Instead of looping through each user and adding some usermeta, we set the
+	 * usermeta for all users in one DB query.
+	 *
+	 * @since 2.2
+	 *
+	 * @access protected
+	 * @return void
+	 * @author r-a-y
+	 */
+	protected function set_current_users_as_authenticated() {
+		global $wpdb;
+
+		// get all pending user IDs
+		$user_ids = $this->get_users( 'pending', array( 'fields' => 'ID' ) );
+
+		// set up the initial query
+		$query = "
+			INSERT INTO {$wpdb->usermeta}
+				(user_id, meta_key, meta_value)
+			VALUES
+		";
+
+		$query .= " ";
+
+		// set up our values array containing the inserted data
+		$values = array();
+
+		foreach ( $user_ids as $user_id ) {
+			$values[] = "({$user_id}, 'authentication', '1')";
+		}
+
+		// add the values to our query
+		$query .= implode( ', ', $values );
+
+		// clear some memory while we're at it
+		$user_ids = null;
+		$values   = null;
+		unset( $user_ids, $values );
+
+		// do the query!
+		$wpdb->query( $query );
 	}
 
 	/**
