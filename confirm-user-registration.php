@@ -670,18 +670,18 @@ class Confirm_User_Registration
 	 **/
 	public function wp_authenticate_user( $user )
 	{
-		$user = get_users( array( 'search' => $user->user_login ) );
-		$user_id = $user[0]->ID;
+		// user is confirmed by an admin, so allow the user to login
+		if ( $this->is_authenticated( $user->ID ) ) {
+			return $user;
 
-		if ( $this->is_authenticated( $user_id ) ) :
-			return $user[0];
-		else :
+		// user is still pending
+		} else {
 			$user = new WP_Error();
-			$options = get_option( 'confirm-user-registration' );
+			$options = get_site_option( 'confirm-user-registration' );
 			$error_message = apply_filters( 'confirm-user-registration-error-message', $options['error'] );
 			$user->add( 'error', $error_message );
 			return $user;
-		endif;
+		}
 	}
 
 	/**
