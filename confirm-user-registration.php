@@ -546,7 +546,7 @@ class Confirm_User_Registration
 						$i = 1;
 						foreach ( $users as $user ) :
 							$class = ( $i % 2 == 1 ) ? 'alternate' : 'default';
-							$user_data = get_userdata( $user->ID );
+							$user_data = new WP_User( $user );
 							$user_registered = mysql2date( get_option('date_format'), $user->user_registered );
 							?>
 							<tr id="user-<?php echo $user->ID ?>" class="<?php echo $class ?>">
