@@ -426,15 +426,17 @@ class Confirm_User_Registration
 	 * @return void
 	 * @author Ralf Hortt
 	 **/
-	public function management_nav()
-	{
+	public function management_nav() {
+		$tab = ! empty( $_GET['tab'] ) ? $_GET['tab'] : 'pending';
 		?>
+
 		<h2 class="nav-tab-wrapper">
-			<a class="nav-tab <?php if ( 'pending' == $_GET['tab'] || !$_GET['tab']) echo 'nav-tab-active' ?>" href="users.php?page=confirm-user-registration&amp;tab=pending"><?php _e( 'Pending Users', 'confirm-user-registration' ); ?></a>
-			<a class="nav-tab <?php if ( 'authed' == $_GET['tab'] ) echo 'nav-tab-active' ?>" href="users.php?page=confirm-user-registration&amp;tab=authed"><?php _e( 'Authenticated Users', 'confirm-user-registration' ); ?></a>
-			<a class="nav-tab <?php if ( 'settings' == $_GET['tab'] ) echo 'nav-tab-active' ?>" href="users.php?page=confirm-user-registration&amp;tab=settings"><?php _e( 'Settings', 'confirm-user-registration' ); ?></a>
+			<a class="nav-tab <?php if ( 'pending' == $tab ) echo 'nav-tab-active' ?>" href="users.php?page=confirm-user-registration&amp;tab=pending"><?php _e( 'Pending Users', 'confirm-user-registration' ); ?></a>
+			<a class="nav-tab <?php if ( 'authed' == $tab ) echo 'nav-tab-active' ?>" href="users.php?page=confirm-user-registration&amp;tab=authed"><?php _e( 'Authenticated Users', 'confirm-user-registration' ); ?></a>
+			<a class="nav-tab <?php if ( 'settings' == $tab ) echo 'nav-tab-active' ?>" href="users.php?page=confirm-user-registration&amp;tab=settings"><?php _e( 'Settings', 'confirm-user-registration' ); ?></a>
 			<a class="nav-tab" href="https://github.com/Horttcore/confirm-user-registration" target="_blank"><?php _e( 'Help' ); ?></a>
 		</h2>
+
 		<?php
 	}
 
